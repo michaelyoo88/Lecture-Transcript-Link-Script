@@ -18,7 +18,8 @@ GUID_RE = re.compile(r"^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$")
 PARAGRAPH_CHARS = 600  # start a new paragraph after the sentence that passes this length
 
 
-# grabs the school + recording id from your link, spits out the srt link
+
+# grabs the school + recording id from your link, spits out the txt link
 def build_srt_link(url: str) -> str:
     url = url.strip().strip("'\"")
     parsed = urlparse(url)
@@ -33,7 +34,7 @@ def build_srt_link(url: str) -> str:
 
     return (
         f"https://{parsed.hostname}/Panopto/Pages/Transcription/"
-        f"GenerateSRT.ashx?id={rec_id}&language=0"
+        f"GenerateSRT.ashx?id={rec_id}&language=0\n"
     )
 
 
@@ -115,8 +116,10 @@ def get_srt_link() -> str:
 def get_captions() -> tuple[Path, str]:
     while True:
         default = latest_captions_in_downloads()
-        prompt = "Path to the downloaded captions .txt (drag the file here"
-        prompt += f", or press Enter for {default.name}): " if default else "): "
+        prompt = "Choose desired Panopto captions .txt file: \n"
+        prompt += f"1) Press Enter for {default.name}): " if default else "): "
+        prompt += "\n OR \n"
+        prompt += "2) Drag the desired downloaded txt file here: "
         entered = input(prompt).strip()
         captions_path = clean_path(entered) if entered else default
 
@@ -140,10 +143,7 @@ def main():
     print("\nPaste this into your browser (while logged in) to download the captions .txt:\n")
     print(srt_link)
 
-    # ---- Step 2: convert to txt ----
-    print("\nOnce it's downloaded, we can turn it into a clean .txt file.")
-    if input("Convert now? [Y/n]: ").strip().lower() == "n":
-        return
+
 
     captions_path, text = get_captions()
 
