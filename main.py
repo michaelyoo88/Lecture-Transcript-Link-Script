@@ -8,6 +8,7 @@ Step 2: Give the script the downloaded .srt and a name -> get a clean .txt.
 """
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
@@ -69,10 +70,24 @@ def latest_srt_in_downloads():
     return files[0] if files else None
 
 
+# gets the link from argv or the clipboard. Pasting into input() hangs because
+# macOS terminals cap a typed line at 1024 chars and Panopto links (with their
+# lti_stored_token) are longer than that.
+def get_link() -> str:
+    if len(sys.argv) > 1:
+        return sys.argv[1]
+    input("Copy the Panopto link, then press Enter (don't paste it here): ")
+    try:
+        return subprocess.run(["pbpaste"], capture_output=True, text=True).stdout
+    except FileNotFoundError:
+        sys.exit("Clipboard not available. Pass the link as an argument instead:\n"
+                 "  python3 main.py '<link>'")
+
+
 # runs the whole flow: link -> download -> txt
 def main():
     # ---- Step 1: build the link ----
-    link_in = input("Paste the Panopto link: ")
+    link_in = get_link()
     try:
         srt_link = build_srt_link(link_in)
     except ValueError as e:
